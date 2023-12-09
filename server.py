@@ -1,6 +1,11 @@
 from LanPy import Server
+import time
 
 server = Server('', 50504)
-server.host(20)
+server.host(1, 20)
+
 while True:
-    server.share(input("?: "))
+    print(time.time())
+    time.sleep(1)
+
+    

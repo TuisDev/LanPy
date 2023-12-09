@@ -1,0 +1,18 @@
+# LanPy - ToDo
+
+### ToDo
+- Add Threading
+- Add multiple connections
+- Fix Potential Errors
+- Test
+
+### Potential Errors
+- Broadcast
+    - Server disconnects, and client attempts to connect to it, while server doesn't exist
+- Host and Join
+    - client disconnects ✓
+    - Server Disconnects
+    - False IP or Port
+    - Client opens before server
+    - Connection Fails
+    - Error when client disconnects ✓

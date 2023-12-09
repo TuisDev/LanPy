@@ -1,8 +1,8 @@
 from LanPy import Server
 import time
 
-server = Server('', 50504)
-server.host(1, 20)
+server = Server('192.168.5.149', 50504)
+server.host(0, 20)
 
 while True:
     print(time.time())

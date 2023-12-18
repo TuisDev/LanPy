@@ -11,13 +11,21 @@ class Server:
     self.thread_count = 0
     self.connections = 0
     self.locked = False
+    self.variables = None
+    self.__recieve = None
 
   def __handle_client(self, conn):
     try:
+      threading.Thread(target=self.__recv, args=(conn,), daemon=True).start()
       while True:
-        self.__recv()
-        time.sleep(1)
-        conn.getsockname() # Check to make sure connection exists
+        time.sleep(0.5)
+        if self.variables is not None:
+          self.variables = [str(i) for i in self.variables]
+            
+          message = ";;;\n;;;".join(self.variables)
+          conn.sendall(message.encode())
+        else:
+          conn.getsockname() # Ensure socket is operational
     except OSError:
       self.thread_count -= 1
       print("Connection Closed")
@@ -39,8 +47,8 @@ class Server:
       else:
         print("Server Full")
 
-  def share(self, information):
-      self.conn.sendall(information.encode())
+  def share(self, variables, client=None):
+      self.variables = variables
 
   def host(self, connections=0, backlog=None):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,7 +62,6 @@ class Server:
   def __disconnect_handler(self, conn):
       if select.select([conn], [], [])[0]:
         conn.close()
-      
     
   def lock(self):
     self.locked = True
@@ -63,8 +70,10 @@ class Server:
     self.locked = False
     self.__accept()
 
-  def __recv(self):
-    pass
+  def __recv(self, conn):
+    while True:
+      message = conn.recv(1024).decode()
+      self.__recieve = tuple(message.split(";;;\n;;;"))
 
   def kick(self):
     pass
@@ -90,25 +99,43 @@ class Server:
   def exit(self):
     self.sock.close()
 
+  def recieve(self):
+    if self.__recieve is not None:
+      return self.__recieve
+
   
 class Client:
   def __init__(self, address, port):
     self.address = address
     self.port = port
+    self.__recieve = None
+    self.thread_count = 0
 
   def join(self):
       sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       sock.connect((self.address, self.port))
       self.sock = sock
-
-  def __thread_recv(self):
-    while True:
-      print(self.sock.recv(1024).decode())
+      threading.Thread(target=self.__recv, daemon=True).start()
 
   def __recv(self):
-    print(type(self.sock))
-    print(self.sock.recv(1024).decode())
-       # threading.Thread(target=self.thread_recv, daemon=True)
+    while True:
+      message = self.sock.recv(1024).decode()
+      self.__recieve = tuple(message.split(";;;\n;;;"))
+
+  def share(self, variables):
+    if self.thread_count == 0:
+      self.thread_count += 1
+      threading.Thread(target=self.__share, args=(variables,), daemon=True).start()
+
+  def __share(self, variables):
+    while True:
+      time.sleep(0.5)
+      if variables is not None:
+        variables = [str(i) for i in variables]
+          
+        message = ";;;\n;;;".join(variables)
+        self.sock.sendall(message.encode())
+    
   
   def exit(self):
     self.sock.close()
@@ -118,3 +145,7 @@ class Client:
 
   def __link(self):
     pass
+
+  def recieve(self):
+    if self.__recieve is not None:
+      return self.__recieve

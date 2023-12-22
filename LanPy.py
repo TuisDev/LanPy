@@ -75,6 +75,9 @@ class Server:
       message = conn.recv(1024).decode()
       self.__recieve = tuple(message.split(";;;\n;;;"))
 
+  def get_connections(self):
+    return self.connections
+
   def kick(self):
     pass
 
